@@ -20,9 +20,9 @@ Cd0 = 1000.0            # ppm oxygen in dirty powder
 Cs0 = 50.0              # ppm oxygen in scavenger
 
 mass_dirty = 1.0
-mass_scav = 1.0         # change ratio here
+mass_scav = 1.1         # change ratio here
 Rd = 50e-6              # m
-Rs = 5e-6              # m
+Rs = 50e-6              # m
 
 Dd0 = 1e-7
 Qs  = 180e3
