@@ -16,25 +16,40 @@ import matplotlib.pyplot as plt
 
 T = 1400 + 273.15       # K
 
-Cd0 = 1000.0            # ppm oxygen in dirty powder
-Cs0 = 50.0              # ppm oxygen in scavenger
+Cd0 = 700.0            # ppm oxygen in dirty powder
+Cs0 = 50.0              # ppm oxygen in Ta
 
 mass_dirty = 1.0
-mass_scav = 1.1         # change ratio here
+mass_scav = 10.0         # change ratio here
 Rd = 50e-6              # m
 Rs = 50e-6              # m
 
+# Diffusion constants
+# Diffusion constants, dirty powder
 Dd0 = 1e-7
 Qs  = 180e3
 
-Ds0 = 1e-7
-Qd  = 200e3
+# Diffusion constants, scavenger pure Ta
+Ds0 = np.exp(-13.72) #(https://doi.org/10.1016/0001-6160(86)90240-3)
+Qd  = 115.5e3 #J/mol
 
-Rgas = 8.314
+Rgas = 8.314 #J/mol/K
 
-# oxygen affinity / solubility
-Csat_dirty = 5000
-Csat_scav  = 50000
+# Oxygen solubility in Ta (up to 900C: https://apps.dtic.mil/sti/tr/pdf/ADA382682.pdf)
+#1100C - 1800C : https://doi.org/10.1016/0022-5088(72)90062-8
+def tantalum_solubility(T):
+    if T < 1373:
+        return 10 ** (4.130 - 1279/T)
+    else:
+        return 3.322 * T - 1833.6
+
+
+
+
+# oxygen affinity / solubility PPM
+
+Csat_dirty = 1000 #assume 1000 ppm for dirty powder
+Csat_scav  = tantalum_solubility(T)
 
 # ---------------------------
 # Diffusivities
@@ -101,6 +116,7 @@ idx = np.argmin(np.abs(Cd-target))
 t95 = sol.t[idx]
 
 print(f"T95 = {t95/3600:.2f} hours")
+print(f"Scavenger solubility: {Csat_scav:.2f} ppm")
 
 # ---------------------------
 # Plot
@@ -108,6 +124,9 @@ print(f"T95 = {t95/3600:.2f} hours")
 
 plt.plot(sol.t/3600,Cd,label='Dirty Powder')
 plt.plot(sol.t/3600,sol.y[1],label='Scavenger')
+plt.xlim(-5,100)
+plt.ylim(0,Csat_dirty+0.1*Csat_dirty)
+plt.axhline(50, color='gray', linestyle='--', label='Target 50 ppm')
 plt.xlabel('Time (hours)')
 plt.ylabel('Oxygen (ppm)')
 plt.legend()
