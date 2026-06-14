@@ -16,7 +16,7 @@ T = 1400 + 273.15  # K
 Cd0 = 700.0
 Cs0 = 50.0
 mass_dirty = 1.0
-Rd = 50e-6
+Rd = 50e-6 #radius of dirty powder particle (m)
 Rs = 500e-6
 
 Csat_scav = tantalum_solubility(T)
