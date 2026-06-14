@@ -16,32 +16,30 @@ import matplotlib.pyplot as plt
 
 T = 1400 + 273.15       # K
 
-Cd0 = 700.0            # ppm oxygen in dirty powder
+Cd0 = 400.0            # ppm oxygen in dirty powder
 Cs0 = 50.0              # ppm oxygen in Ta
 
 mass_dirty = 1.0
 mass_scav = 10.0         # change ratio here
 Rd = 50e-6              # m
-Rs = 50e-6              # m
+Rs = 500e-6              # m
 
 # Diffusion constants
 # Diffusion constants, dirty powder
 Dd0 = 1e-7
-Qs  = 180e3
+Qd  = 200e3
 
 # Diffusion constants, scavenger pure Ta
 Ds0 = np.exp(-13.72) #(https://doi.org/10.1016/0001-6160(86)90240-3)
-Qd  = 115.5e3 #J/mol
+Qs  = 115.5e3 #J/mol
 
 Rgas = 8.314 #J/mol/K
 
-# Oxygen solubility in Ta (up to 900C: https://apps.dtic.mil/sti/tr/pdf/ADA382682.pdf)
-#1100C - 1800C : https://doi.org/10.1016/0022-5088(72)90062-8
+# Oxygen solubility in Ta 600 - 1800C : https://doi.org/10.1016/0022-5088(72)90062-8
 def tantalum_solubility(T):
-    if T < 1373:
-        return 10 ** (4.130 - 1279/T)
-    else:
-        return 3.322 * T - 1833.6
+    # wt ppm, unified Arrhenius fit to Ta-O phase boundary data
+    # log(Csat) = 9.7657 - 2564.86/T  (T in Kelvin)
+    return np.exp(9.7657 - 2564.86/T)
 
 
 
@@ -117,6 +115,8 @@ t95 = sol.t[idx]
 
 print(f"T95 = {t95/3600:.2f} hours")
 print(f"Scavenger solubility: {Csat_scav:.2f} ppm")
+print(f"Cd_eq = {Cd_eq:.2f} ppm")
+print(f"Cs_eq = {sol.y[1][-1]:.2f} ppm")
 
 # ---------------------------
 # Plot
