@@ -1,144 +1,85 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun  1 21:46:02 2026
-
-@author: michaelpavel
+diffusion.py
+Single condition oxygen diffusion simulation between dirty and scavenger powder.
 """
-
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+from materials import Rgas, Dd0, Qd, Ds0, Qs, Csat_dirty, tantalum_solubility
 
 # ---------------------------
 # User inputs
 # ---------------------------
-
-T = 1400 + 273.15       # K
-
-Cd0 = 700.0            # ppm oxygen in dirty powder
-Cs0 = 50.0              # ppm oxygen in Ta
-
+T = 1400 + 273.15  # K
+Cd0 = 700.0        # wt ppm oxygen in dirty powder
+Cs0 = 50.0         # wt ppm oxygen in Ta
 mass_dirty = 1.0
-mass_ratio_values = np.logspace(-2, 0, 12)  # sweep m_dirty/m_scav from 0.01 to 1.0
-Rd = 50e-6              # m
-Rs = 500e-6              # m
-
-# Diffusion constants
-# Diffusion constants, dirty powder
-Dd0 = 1e-7
-Qd  = 200e3
-
-# Diffusion constants, scavenger pure Ta
-Ds0 = np.exp(-13.72) #(https://doi.org/10.1016/0001-6160(86)90240-3)
-Qs  = 115.5e3 #J/mol
-
-Rgas = 8.314 #J/mol/K
-
-# Oxygen solubility in Ta 600 - 1800C : https://doi.org/10.1016/0022-5088(72)90062-8
-def tantalum_solubility(T):
-    # wt ppm, unified Arrhenius fit to Ta-O phase boundary data
-    # log(Csat) = 9.7657 - 2564.86/T  (T in Kelvin)
-    return np.exp(9.7657 - 2564.86/T)
-
-
-
-
-# oxygen affinity / solubility PPM
-
-Csat_dirty = 1000 #assume 1000 ppm for dirty powder
-Csat_scav  = tantalum_solubility(T)
+mass_scav = 10.0
+Rd = 50e-6         # m
+Rs = 500e-6        # m
 
 # ---------------------------
 # Diffusivities
 # ---------------------------
-
-Dd = Dd0*np.exp(-Qd/(Rgas*T))
-Ds = Ds0*np.exp(-Qs/(Rgas*T))
-
-# characteristic diffusion times
-tau_d = Rd**2/Dd
-tau_s = Rs**2/Ds
-
+Csat_scav = tantalum_solubility(T)
+Dd = Dd0 * np.exp(-Qd / (Rgas * T))
+Ds = Ds0 * np.exp(-Qs / (Rgas * T))
+tau_d = Rd**2 / Dd
+tau_s = Rs**2 / Ds
 tau = tau_d + tau_s
 
 # ---------------------------
 # Chemical potential model
 # ---------------------------
-
 def mu(C, Csat):
-    C = max(C,1e-6)
-    return np.log(C/Csat)
+    C = max(C, 1e-6)
+    return np.log(C / Csat)
 
 # ---------------------------
-# Sweep over mass ratio
+# ODE system
 # ---------------------------
-
-
-def simulate_ratio(ratio, t_end=1e7):
-    """Return equilibrium concentration and 95% equilibration time for one mass ratio."""
-    mass_scav = mass_dirty / ratio
-    Csat_scav = tantalum_solubility(T)
-
-    def rhs_local(t, y):
-        Cd, Cs = y
-        mud = mu(Cd, Csat_dirty)
-        mus = mu(Cs, Csat_scav)
-        flux = (mud - mus) / tau
-        dCd = -flux
-        dCs = (mass_dirty / mass_scav) * flux
-        return [dCd, dCs]
-
-    sol = solve_ivp(
-        rhs_local,
-        [0, t_end],
-        [Cd0, Cs0],
-        max_step=1000,
-        rtol=1e-6,
-        atol=1e-9,
-    )
-
-    Cd = sol.y[0]
-    Cd_eq = Cd[-1]
-    target = Cd_eq + 0.05 * (Cd0 - Cd_eq)
-    idx = np.argmin(np.abs(Cd - target))
-    t95 = sol.t[idx]
-
-    return {
-        'ratio': ratio,
-        'mass_scav': mass_scav,
-        'Cd_eq': Cd_eq,
-        'Cs_eq': sol.y[1][-1],
-        't95_h': t95 / 3600,
-        'sol': sol,
-    }
-
-
-results = [simulate_ratio(r) for r in mass_ratio_values]
-Cd_eq_values = np.array([res['Cd_eq'] for res in results])
-ratio_values = np.array([res['ratio'] for res in results])
-
-print('Sweep over m_dirty / m_scav:')
-for res in results:
-    print(
-        f"ratio={res['ratio']:.3f}, m_scav={res['mass_scav']:.2f}, "
-        f"Cd_eq={res['Cd_eq']:.2f} ppm, T95={res['t95_h']:.2f} h"
-    )
+def rhs(t, y):
+    Cd, Cs = y
+    mud = mu(Cd, Csat_dirty)
+    mus = mu(Cs, Csat_scav)
+    flux = (mud - mus) / tau
+    return [-flux, (mass_dirty / mass_scav) * flux]
 
 # ---------------------------
-# Plot Cd_eq versus mass ratio
+# Solve
 # ---------------------------
+sol = solve_ivp(rhs, [0, 1e7], [Cd0, Cs0], max_step=1000, rtol=1e-6, atol=1e-9)
 
+Cd = sol.y[0]
+Cd_eq = Cd[-1]
+target = Cd_eq + 0.05 * (Cd0 - Cd_eq)
+t95 = sol.t[np.argmin(np.abs(Cd - target))]
+
+# Analytical equilibrium
+ratio = Csat_scav / Csat_dirty
+Cd_eq_analytical = (mass_dirty * Cd0 + mass_scav * Cs0) / (mass_dirty + mass_scav * ratio)
+Cs_eq_analytical = Cd_eq_analytical * ratio
+
+print(f"T95            = {t95/3600:.2f} hours")
+print(f"Csat_scav      = {Csat_scav:.2f} ppm")
+print(f"Cd_eq (solver) = {Cd_eq:.2f} ppm")
+print(f"Cs_eq (solver) = {sol.y[1][-1]:.2f} ppm")
+print(f"Cd_eq (analytical) = {Cd_eq_analytical:.2f} ppm")
+print(f"Cs_eq (analytical) = {Cs_eq_analytical:.2f} ppm")
+
+# ---------------------------
+# Plot
+# ---------------------------
 plt.figure(figsize=(8, 5))
-plt.plot(ratio_values, Cd_eq_values, 'o-', color='tab:blue')
-plt.xscale('log')
-plt.xlabel('Mass ratio m_dirty / m_scav')
-plt.ylabel('Cd_eq (ppm)')
-plt.title('Equilibrium oxygen content vs mass ratio')
-plt.grid(True, which='both', alpha=0.3)
+plt.plot(sol.t / 3600, Cd, label='Dirty Powder')
+plt.plot(sol.t / 3600, sol.y[1], label='Scavenger')
+plt.axhline(50, color='gray', linestyle='--', label='Target 50 ppm')
+plt.xlim(-5, 100)
+plt.ylim(0, Csat_dirty * 1.1)
+plt.xlabel('Time (hours)')
+plt.ylabel('Oxygen (ppm)')
+plt.legend()
 plt.tight_layout()
-plt.savefig('Cd_eq_vs_mass_ratio.png', dpi=150)
-if 'agg' not in plt.get_backend().lower():
-    plt.show()
-else:
-    plt.close()
+plt.show()
