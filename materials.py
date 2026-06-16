@@ -15,7 +15,7 @@ Rgas = 8.314  # J/mol/K
 # Dirty powder (W assumption)
 # ---------------------------
 Dd0 = 1e-7        # m^2/s
-Qd  = 200e3       # J/mol
+Qd  = 150e3       # J/mol
 Csat_dirty = 1000 # wt ppm, assumed fixed for now
 
 # ---------------------------

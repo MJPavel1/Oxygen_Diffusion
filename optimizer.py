@@ -13,7 +13,7 @@ from materials import Rgas, Dd0, Qd, Ds0, Qs, Csat_dirty, tantalum_solubility
 # ---------------------------
 # Fixed conditions
 # ---------------------------
-T       = 1400 + 273.15  # K
+T       = 1200 + 273.15  # K
 Cd0     = 700.0          # wt ppm
 Cs0     = 50.0           # wt ppm
 mass_dirty = 1.0
