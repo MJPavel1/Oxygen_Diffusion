@@ -12,13 +12,13 @@ from materials import Rgas, Dd0, Qd, Ds0, Qs, Csat_dirty, tantalum_solubility
 # ---------------------------
 # User inputs
 # ---------------------------
-T = 1400 + 273.15  # K
+T = 1200 + 273.15  # K
 Cd0 = 700.0        # wt ppm oxygen in dirty powder
 Cs0 = 50.0         # wt ppm oxygen in Ta
 mass_dirty = 1.0
-mass_scav = 10.0
-Rd = 50e-6         # m
-Rs = 500e-6        # m
+mass_scav = 50.0
+Rd = 17e-6         # m
+Rs = 25e-6        # m
 
 # ---------------------------
 # Diffusivities
