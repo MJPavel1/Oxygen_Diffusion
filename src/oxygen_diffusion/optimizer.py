@@ -8,7 +8,7 @@ Generates contour plots of T95 and Cd_eq across the design space.
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-from materials import Rgas, Dd0, Qd, Ds0, Qs, Csat_dirty, tantalum_solubility
+from oxygen_diffusion.materials import Rgas, Dd0, Qd, Ds0, Qs, Csat_dirty, tantalum_solubility
 
 # ---------------------------
 # Fixed conditions

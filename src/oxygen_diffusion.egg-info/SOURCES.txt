@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/oxygen_diffusion/__init__.py
+src/oxygen_diffusion/diffusion.py
+src/oxygen_diffusion/materials.py
+src/oxygen_diffusion/optimizer.py
+src/oxygen_diffusion/plots.py
+src/oxygen_diffusion.egg-info/PKG-INFO
+src/oxygen_diffusion.egg-info/SOURCES.txt
+src/oxygen_diffusion.egg-info/dependency_links.txt
+src/oxygen_diffusion.egg-info/top_level.txt
